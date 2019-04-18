@@ -25,11 +25,11 @@ class ValidationRulesAnalysisTable extends PureComponent {
 
     render() {
         const elements = this.props.elements;
-
+        
         // Table Rows
         const rows = elements.map(element => (
             <TableRow key={element.key}>
-                <TableRowColumn>{element.organisation}</TableRowColumn>
+                <TableRowColumn>{element.orgUnitFullPath?element.orgUnitFullPath:''}</TableRowColumn>
                 <TableRowColumn>{element.period}</TableRowColumn>
                 <TableRowColumn>{element.importance}</TableRowColumn>
                 <TableRowColumn>{element.validationRule}</TableRowColumn>

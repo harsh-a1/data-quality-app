@@ -21,6 +21,8 @@
 
 .appTable tr td {
     font-size: 14px !important;
+    white-space:normal !important;
+
 }
 
 .right {

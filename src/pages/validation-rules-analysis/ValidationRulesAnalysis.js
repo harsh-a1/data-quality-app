@@ -32,6 +32,7 @@ import ValidationRulesAnalysisTable from './validation-rules-analysis-table/Vali
 
 import { apiConf } from '../../server.conf';
 import { convertDateToApiDateFormat } from '../../helpers/dates';
+import { makeCommaSeparatedIdList,makeFacilityPathMap }   from '../../helpers/utility';
 
 class ValidationRulesAnalysis extends Page {
     static STATE_PROPERTIES = [
@@ -121,7 +122,7 @@ class ValidationRulesAnalysis extends Page {
 
             api.post(apiConf.endpoints.validationRulesAnalysis, { ...request }).then((response) => {
                 if (this.isPageMounted()) {
-                    const elements = response.map(ValidationRulesAnalysis.convertElementFromApiResponse);
+                    var elements = response.map(ValidationRulesAnalysis.convertElementFromApiResponse);
                     const feedback = elements && elements.length > 0 ? {
                         showSnackbar: false,
                     } : {
@@ -131,14 +132,24 @@ class ValidationRulesAnalysis extends Page {
                             message: i18n.t(i18nKeys.messages.validationSuccess),
                         },
                     };
-                    this.context.updateAppState({
-                        ...feedback,
-                        pageState: {
-                            loading: false,
-                            elements,
-                            showTable: elements && elements.length > 0,
-                        },
-                    });
+
+                    let commaSeparatedIdList = makeCommaSeparatedIdList(elements,'organisationUnitId');
+                    api.get(`organisationUnits?fields=id,name,ancestors[id,name,level]&filter=id:in:[${commaSeparatedIdList}]&paging=false`, null).then((_response) => {
+                        const ouFullPathMapById=makeFacilityPathMap(_response.organisationUnits,2);
+                        elements = elements.map((elem)=>{
+                            elem.orgUnitFullPath = ouFullPathMapById[elem.organisationUnitId];
+                            return elem;
+                        });
+                        
+                        this.context.updateAppState({
+                                ...feedback,
+                            pageState: {
+                                loading: false,
+                                elements,
+                                showTable: elements && elements.length > 0,
+                            },
+                        });
+                    }); 
                 }
             }).catch(() => { this.manageError(); });
         }
@@ -273,7 +284,7 @@ class ValidationRulesAnalysis extends Page {
                         />
                     </CardText>
                     <CardText id="results-table" style={{ display: this.state.showTable ? 'block' : 'none' }}>
-                        <ValidationRulesAnalysisTable elements={this.state.elements} />
+                <ValidationRulesAnalysisTable elements={this.state.elements}  />
                     </CardText>
                 </Card>
             </div>
